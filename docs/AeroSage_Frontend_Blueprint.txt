@@ -1,0 +1,348 @@
+=====================================================================================================
+AEROSAGE  -  FRONTEND BLUEPRINT  (for the frontend team, aligned with the backend + model)
+Team NexByte | Root Access Hackathon | Paryavaran Welfare Society
+=====================================================================================================
+
+HOW TO USE THIS FILE
+  * Product name on the website: AeroSage.  (The code/API folder is called AirWard - users never see that name.)
+  * Every number on screen comes from the API. Never type numbers by hand. Exact field names: open
+    http://<server>/docs (interactive API page) and docs/API_CHANGES.md.
+  * All API paths start with /api. City keys: "delhi", "patiala".
+  * Forecast window: 2026-11-01T00 to 2026-11-15T23 = 360 hours. Diwali = 8 Nov 2026. Hours look like "2026-11-08T21" (IST).
+
+-----------------------------------------------------------------------------------------------------
+1. THE ONE-LINE IDEA OF THE WEBSITE
+-----------------------------------------------------------------------------------------------------
+"See it, trust it, understand it, act on it."
+  SEE it      -> map + timeline slider
+  TRUST it    -> forecast range + proof of accuracy
+  UNDERSTAND  -> Why box + weather
+  ACT on it   -> what-if simulator + where-to-act + health advice
+
+The site must be understood in 10 seconds by a judge: the first screen is ONLY a map, a slider and a headline number.
+Everything else appears after a click or in a tab.
+
+-----------------------------------------------------------------------------------------------------
+2. SITE MAP (4 screens)
+-----------------------------------------------------------------------------------------------------
+  Navbar tabs:   [ Map ]   [ Act ]   [ Proof ]   [ About ]        City switcher (right)   Status badge (right)
+
+  SCREEN 1  MAP (home, default)       features 1, 2, 3, 4, 10, 11 (+ 8, 12)
+  SCREEN 2  ACT                        features 5 (what-if), 9 (where to act first)
+  SCREEN 3  PROOF                      features 6, 7, 8, 13, 14  (Diwali compare, short-term, accuracy, 2026 scorecard)
+  SCREEN 4  ABOUT                      how it works, data sources, honest limits, team
+
+Feature numbers used above (same as the team list):
+  1 Pollution Map                 7 Diwali Comparison Chart
+  2 D-7..D+7 Timeline Slider      8 Smoke-Trap Alert
+  3 PM2.5 Forecast Chart          9 Where to Act First
+  4 Why Box                      10 Health Advisory
+  5 What-if Simulator            11 City Switcher
+  6 Short-term Forecast (1/3/6/24h)
+  12 Wind view (extra)   13 Accuracy / blind-test panel (extra)   14 Diwali 2026 public scorecard (extra)
+
+-----------------------------------------------------------------------------------------------------
+3. GLOBAL LAYOUT AND NAVBAR
+-----------------------------------------------------------------------------------------------------
+NAVBAR (fixed top, height 56px, dark navy #0F2540, white text)
+  Left   : logo "AeroSage" (small wind/leaf mark) + tagline on wide screens: "Diwali air, forecast street by street"
+  Centre : tabs  Map | Act | Proof | About     (active tab underlined in teal)
+  Right  : City switcher dropdown [Delhi v] / [Patiala]       (feature 11)
+           Status badge:  "Forecast (model estimate) | Issued 31 Oct 2026, 23:56 IST"   <- from /api/health -> forecast_issued_at
+           (on phones: badge moves under the navbar as a thin strip; tabs become a bottom tab bar)
+
+GLOBAL BANNER (thin strip under navbar, dismissible per session)
+  Text: "All values are model forecasts, not live sensor readings."  (also returned by API: meta.banner)
+
+FOOTER (About screen and tiny line on every screen)
+  "AeroSage | Data: CPCB/DPCC via OpenCity, Open-Meteo, CAMS | Team NexByte, Lovely Professional University"
+
+DESIGN TOKENS
+  Font            : Inter (or system sans). Numbers in tabular figures.
+  Background      : light  #F6F8FB, cards white, radius 12px, soft shadow.  Dark mode optional.
+  Text            : #12202F ; secondary #5B6B7B
+  Accent          : teal #1AA6A6 ; warning amber #E0A100 ; danger red #D64545
+  AQI COLOURS (official CPCB bands - use exactly these everywhere: map, chips, charts, cards)
+      Good          0-50     #00B050  (green)
+      Satisfactory  51-100   #92D050  (light green)
+      Moderate      101-200  #FFD400  (yellow)
+      Poor          201-300  #FF9900  (orange)
+      Very Poor     301-400  #FF0000  (red)
+      Severe        401-500  #8B0000  (dark red / maroon)
+  Never show colour alone: always print the category name too (colour-blind safety).
+
+HONESTY LABELS (small pill tags, always visible near the thing they describe) - THIS IS A SELLING POINT, DO NOT HIDE IT
+  [Forecast - model estimate]   on every forecast value
+  [Station forecast (model)]    on station dots
+  [Estimated between monitors]  on grid boxes (the API sends labels.cell)
+  [Cached]                      next to "Issued at ..." (the API sends cache.state)
+  [Observed]                    ONLY on past real readings (Diwali compare chart, proof panel)
+  [Replay of Diwali 2025]       on short-term forecasts (no live feed yet)
+  [Scenario estimate]           on what-if results
+  [City-level estimate]         on Patiala everywhere
+
+-----------------------------------------------------------------------------------------------------
+4. SCREEN 1: MAP  (home)
+-----------------------------------------------------------------------------------------------------
+LAYOUT (desktop, 3 zones)
+  +--------------------------------------------------------------+---------------------------+
+  |                                                              |  AREA PANEL (right, 380px)|
+  |   MAP (Leaflet, full height)                                 |  opens when user clicks   |
+  |    - grid boxes coloured by forecast AQI                     |  a map box or station     |
+  |    - 39 station dots                                         |                           |
+  |    - legend (bottom-left)   - layer toggles (top-left)       |                           |
+  |    - city mean card (top-right of map)                       |                           |
+  +--------------------------------------------------------------+---------------------------+
+  |  TIMELINE SLIDER  (bottom, full width)  D-7 ........ D0 ........ D+7      [play] [speed]   |
+  +--------------------------------------------------------------------------------------------+
+  Phone: map full screen; area panel slides up as a bottom sheet; slider sits above the bottom tab bar.
+
+--- FEATURE 1: POLLUTION MAP ---------------------------------------------------------------------
+  What the user sees : Delhi coloured in 1.5 km squares (626 boxes) by forecast AQI for the selected hour; 39 station dots on top.
+  Data               : GET /api/{city}/map?hour=2026-11-08T21
+                         cells    = list of [lat, lon, p50, confidence(0|1|2), p10, p90]   (PM2.5 ug/m3; convert to AQI on screen
+                                    with the same CPCB table OR use the "aqi"/"category" the API sends for stations)
+                         stations = list of {name, lat, lon, p50, aqi, category, p10, p90, ...}
+                         city mean, weather (wind/mixing height), labels, cache
+  Preload            : GET /api/{city}/map/all  returns all 360 hours in one call (~700 ms first time) -> use it so dragging the
+                       slider is instant with no network calls.
+  Drawing            : each cell is a rectangle of 0.015 degrees (about 1.5 km) centred on [lat, lon]. Use Leaflet rectangles or a
+                       canvas layer (canvas is smoother for 626 cells).
+  Confidence styling (IMPORTANT - this is the honesty feature):
+                       confidence 2  -> full colour, opacity 0.75   (within 2.5 km of a real monitor)
+                       confidence 1  -> opacity 0.55
+                       confidence 0  -> opacity 0.35 + hatch pattern (far from any monitor)
+                     Legend entry explains it: "Fainter = further from a monitor = less certain".
+  Interaction        : hover a box -> tooltip: "Rohini area | Forecast AQI 332 (Very Poor) | range 290-390 | Estimated between monitors".
+                       click a box or a station dot -> opens the AREA PANEL for the nearest station (see below).
+                       Search box (top-left): type a place; find nearest station with GET /api/{city}/nearest?lat=&lon=
+  Layer toggles      : [Grid]  [Stations]  [Wind arrows]  (feature 12).
+  City mean card     : "Delhi average, 8 Nov 9 PM: AQI 296 (Poor)" - from the map response.
+  Patiala            : same screen but only ~72 faint uniform boxes and ONE station; show the tag [City-level estimate] and the note
+                       "No ground monitors in Patiala. This is a city-level model estimate." (API: neighbourhood_detail=false).
+
+--- FEATURE 2: D-7 to D+7 TIMELINE SLIDER ---------------------------------------------------------
+  What the user sees : a slider along the bottom with 15 day ticks: D-7 ... D-1, D0 (DIWALI, 8 Nov, highlighted with a diya icon), D+1 ... D+7.
+                       Within each day a second thin handle (or hour dropdown) picks the hour 00-23.
+  Data               : times[] from GET /api/{city}/meta  (360 strings). No extra call per move if map/all is preloaded.
+  Controls           : [Play/Pause]  speed 1x/2x/4x ;  [Jump to Diwali night] button -> 2026-11-08T21 ;  keyboard left/right arrows.
+  Label above handle : "Sun 8 Nov | 9:00 PM | Diwali night".
+  Phases (colour the slider track):  Before (D-7..D-1)  grey-blue;  Diwali night (D0 evening to D+1 morning) red;  After  grey-blue.
+  Default on load    : Diwali night 21:00 (shows the strongest picture immediately). Remember the last position while switching tabs.
+
+--- FEATURE 3: PM2.5 FORECAST CHART (inside Area Panel) --------------------------------------------
+  What the user sees : line chart for the selected station over all 360 hours: shaded band (low-high) with a solid middle line,
+                       a vertical marker at the slider position, vertical band marking Diwali night.
+  Data               : GET /api/{city}/forecast?station=Anand%20Vihar
+                         p10[], p50[], p90[] (360 each), plus ws[], blh[], temp[], wd[] weather arrays, times
+  Chart              : Recharts / Chart.js. X = time, Y = PM2.5 ug/m3. Background horizontal bands in CPCB colours (right axis can show
+                       AQI category names). Tooltip: "Mon 9 Nov 10 PM | likely 262 (Very Poor... check category) | range 205-330".
+  Under the chart    : plain-words line: "Likely AQI 332 (Very Poor). Could be as low as 290 or as high as 390."
+  Tag                : [Forecast - model estimate].
+  Rule               : NEVER show only the middle line - the band is the honesty.
+
+--- FEATURE 4: WHY BOX (explainable AI, inside Area Panel) ------------------------------------------
+  What the user sees : horizontal bar chart "Why is it bad here, now?" with 5 bars:
+                         Diwali crackers | Weather trap | Farm-fire smoke season | Traffic & daily routine | Local area
+                       bars pushing UP (red, to the right) or DOWN (green, to the left) from a baseline, value in ug/m3 and % share.
+  Data               : GET /api/{city}/explain?station=Anand%20Vihar&hour=2026-11-08T22
+                         causes[] sorted largest first: {name, ug_m3, share, direction, help_text}, baseline, note
+                       The numbers add up exactly: baseline + all causes = the middle forecast. Show this: "Typical level 140 + causes = 332".
+  Updates            : when the slider moves, re-call explain (fast, ~10 ms) or cache by hour.
+  Each bar           : click/hover -> help_text (one plain sentence from the API).
+  Honest wording     : title of the box small print: "Shows what the model relied on - not a proven cause."
+                       Farm-fire bar gets a small (i) tooltip: "Based on the usual burning season, not live fire counts."
+                       Traffic bar tooltip: "Based on time of day, not live traffic."
+
+--- FEATURE 10: HEALTH ADVISORY (inside Area Panel, below Why box) ----------------------------------
+  What the user sees : card "What should I do?" with a person-type selector (chips):
+                       [General]  [Children]  [Elderly]  [Asthma/heart]  [Pregnant]  [Outdoor workers]
+                     and an advice list for the CURRENT AQI category of the selected area and hour.
+  Data               : AQI category comes from the map/station response. The advice table is static (frontend constant) - suggested content:
+                       Good/Satisfactory : normal activity.
+                       Moderate          : sensitive groups reduce long outdoor exertion.
+                       Poor              : avoid prolonged outdoor activity; sensitive groups stay indoors; N95 if you must go out.
+                       Very Poor         : avoid outdoor activity; keep windows closed; use air purifier if available; N95 outside.
+                       Severe            : stay indoors; no outdoor exercise; N95/FFP2 outside; seek care if breathing trouble.
+                     Add a line per person type (e.g. Children: no outdoor play from Poor upwards; Asthma: keep reliever inhaler handy).
+  Footer of card     : "General guidance only, not medical advice."
+  Colour             : card header takes the AQI colour of the category.
+
+--- FEATURE 8: SMOKE-TRAP ALERT ---------------------------------------------------------------------
+  What the user sees : an amber alert chip on the map header and inside the Area Panel: "Smoke-trap conditions: low wind + low air mixing -
+                       smoke stays near the ground." Appears for hours when the rule is true.
+  Rule (frontend, from weather arrays of /forecast or map response):  wind speed < 7 km/h  AND  mixing height (blh) < 250 m.
+  SHOW ONLY FOR NIGHT HOURS (about 20:00-08:00): our data show the rule raises PM2.5 by ~19% at night and has no effect in the afternoon.
+  On the slider track: small amber ticks on hours where the alert is active (from the selected station's arrays, or city average).
+  Tooltip             : "Over 9 years, hours like this had about 19% higher PM2.5 at night."
+
+--- FEATURE 12: WIND VIEW (extra layer) ---------------------------------------------------------------
+  Toggle "Wind" on map: arrows rotated by wind direction (wd) with length by speed (ws, km/h) for the selected hour, one arrow per ~8 stations
+  or one big arrow in the corner ("Wind: from NW, 4 km/h, mixing height 180 m"). Data in map response weather + forecast arrays.
+
+AREA PANEL (opens on click) - order of cards from top to bottom:
+   1) Header      : area name / station, big AQI number + category colour chip, "range 290-390", tag [Estimated between monitors] or [Station forecast (model)]
+   2) Forecast chart (feature 3)
+   3) Short-term strip: "Next hours: +1h 340, +3h 355, +6h 370, +24h 310" (see feature 6) - collapsed by default
+   4) Why box (feature 4)
+   5) Smoke-trap alert (feature 8) if active
+   6) Health advisory (feature 10)
+   7) Button: [Try a what-if for this city ->] opens the Act tab at the same hour
+
+-----------------------------------------------------------------------------------------------------
+5. SCREEN 2: ACT
+-----------------------------------------------------------------------------------------------------
+--- FEATURE 5: WHAT-IF SIMULATOR ------------------------------------------------------------------------
+  Layout       : left = control card with 3 sliders; centre = two maps side by side (BEFORE | AFTER) with the SAME colour scale;
+                 right = result card.
+  Sliders (0-100%): "Reduce firecrackers"  "Reduce traffic"  "Reduce farm-fire smoke".   (Weather is never adjustable - say so in a hint.)
+                    Preset buttons: [Green crackers only = crackers 100%]  [Odd-even style traffic = traffic 30%]  [All three]  [Reset]
+  Data         : GET /api/{city}/simulate?hour=2026-11-08T22&crackers=1&traffic=0.3&fires=0.5     (values 0..1)
+                   -> before_city {pm25, aqi, category}, after_city {...}, stations[] sorted worst first, each with before/after + suggested action,
+                      after cells for the right-hand map
+                 Debounce slider calls by 150 ms (call is ~12 ms).
+  Result card  : big "Delhi average: AQI 296 -> 251 (Poor -> Poor)"  with an arrow and "-45 points (-15%)".
+                 If the category improves, highlight it ("Very Poor -> Poor").
+  Station table: top 10 worst areas with before -> after and the action text from the API.
+  Tag + note   : [Scenario estimate]  "Estimated from what the model learned; not a measured policy result."
+  Hour         : same hour as the slider; allow changing the hour inside this screen.
+
+--- FEATURE 9: WHERE TO ACT FIRST -------------------------------------------------------------------------
+  What the user sees : ranked list (top 10) of areas "usually worst", each row: rank, area, AQI chip, bar, top cause (e.g. "Crackers"), action.
+  Data               : GET /api/{city}/rank?hour=...&top=10
+  Wording            : title "Areas usually worst - start here". (Do NOT say "predicted to be worst" - the ranking is only moderately
+                       consistent in testing.)  Clicking a row flies the map to that area (Map tab).
+
+-----------------------------------------------------------------------------------------------------
+6. SCREEN 3: PROOF  (this screen wins the "can we trust it" question)
+-----------------------------------------------------------------------------------------------------
+Sub-tabs inside Proof:  [ Diwali compare ]  [ Hidden-answer test ]  [ Short-term ]  [ 2026 scorecard ]
+
+--- FEATURE 7: DIWALI COMPARISON CHART ----------------------------------------------------------------------
+  What the user sees : line chart, x axis = D-7..D+7 (days from Diwali), one thin grey line per year 2017-2025 (measured daily city average PM2.5),
+                       and one bold teal line for the 2026 forecast. Diwali day (D0) marked.
+  Data               : GET /api/{city}/diwali -> past (9 years), forecast_2026 (keyed "-7".."7"), phases (before / night / after averages)
+  Tags               : past lines [Observed], 2026 line [Forecast - model estimate].
+  Under chart        : three number cards: "Before Diwali avg", "Diwali night avg", "After avg" for 2026 forecast and the 9-year average.
+  Footnote           : "Past peaks are understated in 2020-21 because the sensors cap at AQI 500."
+  Note               : Diwali dates differ by year, so the x axis is days FROM Diwali, not calendar date.
+
+--- FEATURE 13: HIDDEN-ANSWER TEST (accuracy panel) -----------------------------------------------------------
+  What the user sees : title "We tested it on Diwali 2025 without showing the model that data."
+                       bar chart (lower is better) of average miss in ug/m3:
+                          AeroSage | Global satellite model | Last week's reading | Average of past Diwalis
+                       Data: /api/delhi/diwali -> backtest.metrics   (CURRENT verified values: 54.6 / 60.8 / 68.0 / 85.5 - always read from the API)
+                       Next to the chart, three plain statements (values from the API):
+                          "Closer than last week's reading by about 20%"
+                          "Right AQI category about 4 times in 10; within one category about 8 in 10"
+                          "Our low-high range held about 3 times in 4"
+                       A small "How to read this" popover: "Average miss = how far the forecast is from what was measured, on average."
+  Honest footnote    : "Tested with recorded weather rather than a day-ahead weather forecast, so real-world accuracy will be somewhat lower."
+  Optional           : per-station accuracy bars (from results.json per_station if exposed) - best and worst 3.
+
+--- FEATURE 6: SHORT-TERM FORECAST (1 / 3 / 6 / 24 hours) -------------------------------------------------------
+  What the user sees : picker for station + a time of "now" in Diwali 2025 (default 20 Oct 2025 21:00); four result tiles: +1h, +3h, +6h, +24h,
+                       each showing "forecast made" vs "what really happened", plus the typical error of that horizon.
+  Data               : GET /api/delhi/replay?station=Anand%20Vihar&hour=2025-10-20T21       (labelled REPLAY - no live feed yet)
+                       Live route (future / if a feed is connected): POST /api/delhi/nowcast  body {station, now, readings:[25+ hourly values]}
+  Tags               : [Replay of Diwali 2025]  (turns into [Live] only if a real feed posts to /nowcast)
+  Summary table      : horizon | AeroSage miss | "same as now" miss  (from diwali -> short_term):  1h 16.1 vs 18.1 | 3h 28.4 vs 36.7 | 6h 34.9 vs 52.8 | 24h 42.7 vs 47.8
+  Also show the compact version in the Area panel (+1h/+3h/+6h/+24h chips) using the model forecast changes if available.
+
+--- FEATURE 14: DIWALI 2026 PUBLIC FORECAST AND SCORECARD ----------------------------------------------------------
+  What the user sees : card "Our public Diwali 2026 forecast - frozen 31 Oct 2026, 23:56 IST. Check us after 9 November."
+                       table of 5 days (7-11 Nov): forecast city average, low-high, actual (empty until filled), error.
+  Data               : GET /api/delhi/scorecard   ->  rows[] ; after 9 Nov an admin posts real averages: POST /api/delhi/scorecard {actuals:{"2026-11-08":270,...}}
+  Visible after fill : green/amber tick per day and "Average miss over scored days".
+  Tag                : [Forecast issued before the event].
+
+-----------------------------------------------------------------------------------------------------
+7. SCREEN 4: ABOUT
+-----------------------------------------------------------------------------------------------------
+  Section A  "The problem"     : 39 monitors, ~3 crore people, air differs street to street, Diwali swings it. (one short paragraph)
+  Section B  "How it works"    : the 5-step graphic: Collect -> Learn -> Forecast -> Fill the gaps -> Show. (icons + one line each)
+  Section C  "What the model looks at" : the 5 reason groups with icons (crackers, weather, farm smoke, traffic, local area).
+  Section D  "Our data"        : CPCB/DPCC via OpenCity (2017-2025, 39 monitors), Open-Meteo weather, CAMS satellite-model PM2.5, OpenStreetMap.
+  Section E  "Honest limits"   : traffic = time-of-day pattern; farm smoke = seasonal pattern (no live fire counts); between-monitor boxes are estimates;
+                                 Patiala has no ground monitors; forecasts are saved, not live. Each with "how we fix it".
+  Section F  "Scales to any city": "A new city is one command" + city list from /api/cities.
+  Section G  "Team"            : Team NexByte, Lovely Professional University - Amandeep Singh Oberai, Harpreet Singh, Sarthak Sharma, Devvansh Chaudhary.
+
+-----------------------------------------------------------------------------------------------------
+8. FEATURE 11: CITY SWITCHER (navbar)
+-----------------------------------------------------------------------------------------------------
+  Dropdown filled from GET /api/cities  ->  [{key, name, center, zoom, stations, has_ground_stations}].
+  On change : reload meta + map for that city, fly the map to its centre/zoom, keep the same hour on the slider, show/hide Delhi-only items:
+              - Patiala has ONE city-level point, so: no station dots list, no "Where to act first" ranking, no short-term replay;
+                the Why box and forecast chart still work; add the persistent tag [City-level estimate].
+  URL        : keep city and hour in the URL (?city=delhi&hour=2026-11-08T21) so a link can be shared.
+
+-----------------------------------------------------------------------------------------------------
+9. STATES THE UI MUST HANDLE
+-----------------------------------------------------------------------------------------------------
+  Loading   : skeleton shimmer for map/cards; map shows last hour while the next loads (with preloaded /map/all this rarely shows).
+  Errors    : API returns 404 with {detail:"..."} for bad city/station/hour -> friendly toast "That hour isn't in the forecast window (1-15 Nov 2026)".
+              Network down -> banner "Can't reach the forecast server. Showing the last saved view." and use cached data if any.
+  Empty     : scorecard actuals empty before 9 Nov -> show dashes, not zeros.
+  Backup    : keep a copy of /map/all, /meta, /diwali, /forecast for 3 stations and /explain JSON bundled as static files for a demo with no internet.
+
+-----------------------------------------------------------------------------------------------------
+10. PERFORMANCE AND PHONE RULES
+-----------------------------------------------------------------------------------------------------
+  * Call /meta and /map/all once at start; everything else is a ~10 ms call.
+  * Gzip is on; cache responses in memory by (city, hour, station).
+  * Canvas rendering for the grid. No more than 626 + 39 shapes on screen.
+  * Phone (<768px): bottom tab bar, bottom sheet area panel (drag up/down), big slider thumb (44px), charts full width, health chips scroll horizontally.
+  * Accessibility: category names beside colours, contrast 4.5:1 for text, keyboard-operable slider, alt text on icons.
+  * Languages: English first; strings in one file so Hindi / Punjabi can be added (promised on the impact slide).
+
+-----------------------------------------------------------------------------------------------------
+11. COPY TO USE (so the site never over-claims)
+-----------------------------------------------------------------------------------------------------
+  DO say   : "forecast", "estimate", "likely", "range", "what the model relied on", "scenario", "replay", "city-level estimate".
+  DON'T say: "live", "real-time", "exact", "guaranteed", "caused by" (for the Why box), "street-level accuracy", "predicted to be worst".
+  Headline : "Diwali air, forecast street by street."
+  Sub      : "Slide through the Diwali week, see why the air turns bad, and test what could make it better."
+
+-----------------------------------------------------------------------------------------------------
+12. THE 3-MINUTE DEMO PATH (build and rehearse THIS first)
+-----------------------------------------------------------------------------------------------------
+  1. Open on Map, Delhi, Diwali night 21:00 -> the city is red. Say the 39-monitors line. (features 1, 2)
+  2. Drag the slider from D-3 to D0 and back: the colours change. Press [Jump to Diwali night]. (feature 2)
+  3. Click Rohini: the panel opens - range chart, then Why box: crackers and trapped air on top. (features 3, 4)
+  4. Click [Try a what-if] -> Act tab -> press "Green crackers only", then "All three": the AFTER map cools, city average drops. (feature 5)
+  5. Proof tab -> hidden-answer test chart: "55 against 68 for last week's reading." (feature 13)
+  6. Show the 2026 scorecard card: "frozen with a timestamp - check us on 9 November." (feature 14)
+  7. Switch city to Patiala: "one setting per city". (feature 11)
+  Everything else (compare chart, short-term, health card, smoke-trap, where-to-act) is shown only if a judge asks.
+
+-----------------------------------------------------------------------------------------------------
+13. BUILD ORDER (if time is short)
+-----------------------------------------------------------------------------------------------------
+  P0 (must work): Map + slider, Area panel with chart + Why box, What-if, Proof test chart, navbar + city switcher + honesty labels.
+  P1            : Diwali compare chart, scorecard card, health advisory card, smoke-trap chip.
+  P2            : Short-term replay, wind arrows, where-to-act list, About page polish, Hindi/Punjabi strings.
+  Stretch (not built on backend): sky-photo haze check.
+
+-----------------------------------------------------------------------------------------------------
+14. ENDPOINT CHEAT SHEET
+-----------------------------------------------------------------------------------------------------
+  GET  /api/health                                    status + forecast_issued_at
+  GET  /api/cities                                    city switcher
+  GET  /api/{city}/meta                               times[], stations, banner, importance, backtest, labels
+  GET  /api/{city}/map?hour=                          cells + stations + city mean + weather + labels
+  GET  /api/{city}/map/all                            all 360 hours of cell middle values (preload)
+  GET  /api/{city}/forecast?station=                  p10/p50/p90 x360 + weather arrays
+  GET  /api/{city}/nearest?lat=&lon=                  nearest station (for search / map click)
+  GET  /api/{city}/explain?station=&hour=             Why box
+  GET  /api/{city}/simulate?hour=&crackers=&traffic=&fires=   what-if
+  GET  /api/{city}/rank?hour=&top=                    where to act first
+  GET  /api/{city}/diwali                             compare chart + phases + accuracy + short-term table
+  GET  /api/{city}/replay?station=&hour=              short-term replay (Diwali 2025)
+  POST /api/{city}/nowcast                            short-term from any live feed (future)
+  GET/POST /api/{city}/scorecard                      public 2026 scorecard
+  POST /api/reload                                    admin only (header x-admin-token)
+
+=====================================================================================================
+END
+=====================================================================================================

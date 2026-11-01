@@ -1,0 +1,18 @@
+# Copy to .github/workflows/refresh.yml to refresh the forecast every hour (the weather forecast changes; models stay the same).
+name: refresh-forecast
+on:
+  schedule: [{cron: "0 * * * *"}]
+  workflow_dispatch:
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -r requirements.txt
+      - run: python scripts/refresh_forecast.py   # needs data/processed/weather_<city>.parquet; commit it or rebuild with ml/prepare_data.py
+      - run: |
+          git config user.name airward-bot && git config user.email bot@example.com
+          git add backend/app_data && git commit -m "hourly forecast refresh" || echo "nothing to commit"
+          git push

@@ -1,0 +1,14 @@
+data/raw/
+data/processed/
+data/push/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+*.log
+.venv/
+.DS_Store
+.env
+.env.local
+.env.*.local
+AeroSage/dist/

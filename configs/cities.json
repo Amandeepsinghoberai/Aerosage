@@ -1,0 +1,309 @@
+{
+ "_note": "Add a city = add one entry here (name, centre, bbox, Diwali dates, stations). Station lat/lon are approximate (+-1-2 km). Code is unchanged.",
+ "diwali_dates": {
+  "2017": "2017-10-19",
+  "2018": "2018-11-07",
+  "2019": "2019-10-27",
+  "2020": "2020-11-14",
+  "2021": "2021-11-04",
+  "2022": "2022-10-24",
+  "2023": "2023-11-12",
+  "2024": "2024-10-31",
+  "2025": "2025-10-20",
+  "2026": "2026-11-08"
+ },
+ "alias_keys": {
+  "ihbasdilshadgarden": "ihbas",
+  "northcampusduimd": "northcampusimd"
+ },
+ "cities": {
+  "delhi": {
+   "name": "Delhi",
+   "center": [
+    28.62,
+    77.15
+   ],
+   "zoom": 11,
+   "bbox": [
+    28.4,
+    76.84,
+    28.9,
+    77.36
+   ],
+   "weather_point": [
+    28.62,
+    77.15
+   ],
+   "cell_step": 0.015,
+   "mask_km": 6.5,
+   "has_ground_stations": true,
+   "data_source": "CPCB/DPCC hourly AQI 2017-2023 (PM2.5 derived via CPCB breakpoints) and measured PM2.5 2024-2025 (OpenCity); weather Open-Meteo (ERA5 + forecast)",
+   "stations": [
+    {
+     "name": "Anand Vihar",
+     "key": "anandvihar",
+     "lat": 28.6468,
+     "lon": 77.316
+    },
+    {
+     "name": "Ashok Vihar",
+     "key": "ashokvihar",
+     "lat": 28.6954,
+     "lon": 77.1818
+    },
+    {
+     "name": "Aya Nagar",
+     "key": "ayanagarimd",
+     "lat": 28.4706,
+     "lon": 77.1099
+    },
+    {
+     "name": "Alipur",
+     "key": "alipur",
+     "lat": 28.815,
+     "lon": 77.153
+    },
+    {
+     "name": "Burari Crossing",
+     "key": "buraricrossingimd",
+     "lat": 28.7256,
+     "lon": 77.2011
+    },
+    {
+     "name": "Chandni Chowk",
+     "key": "chandnichowkiitm",
+     "lat": 28.6577,
+     "lon": 77.2273
+    },
+    {
+     "name": "CRRI Mathura Road",
+     "key": "crrimathuraroadimd",
+     "lat": 28.5512,
+     "lon": 77.2735
+    },
+    {
+     "name": "Bawana",
+     "key": "bawana",
+     "lat": 28.7762,
+     "lon": 77.0511
+    },
+    {
+     "name": "Sri Aurobindo Marg",
+     "key": "sriaurobindomarg",
+     "lat": 28.5311,
+     "lon": 77.19
+    },
+    {
+     "name": "Dwarka Sector 8",
+     "key": "dwarkasector8",
+     "lat": 28.571,
+     "lon": 77.0719
+    },
+    {
+     "name": "IGI Airport T3",
+     "key": "igiairportt3imd",
+     "lat": 28.5627,
+     "lon": 77.118
+    },
+    {
+     "name": "Sirifort",
+     "key": "sirifort",
+     "lat": 28.5504,
+     "lon": 77.2159
+    },
+    {
+     "name": "Shadipur",
+     "key": "shadipur",
+     "lat": 28.6514,
+     "lon": 77.1473
+    },
+    {
+     "name": "DTU",
+     "key": "dtu",
+     "lat": 28.75,
+     "lon": 77.1112
+    },
+    {
+     "name": "Vivek Vihar",
+     "key": "vivekvihar",
+     "lat": 28.6723,
+     "lon": 77.3152
+    },
+    {
+     "name": "Rohini",
+     "key": "rohini",
+     "lat": 28.7324,
+     "lon": 77.1177
+    },
+    {
+     "name": "Wazirpur",
+     "key": "wazirpur",
+     "lat": 28.6996,
+     "lon": 77.1652
+    },
+    {
+     "name": "Sonia Vihar",
+     "key": "soniavihar",
+     "lat": 28.7105,
+     "lon": 77.2494
+    },
+    {
+     "name": "Pusa IMD",
+     "key": "pusaimd",
+     "lat": 28.6397,
+     "lon": 77.1469
+    },
+    {
+     "name": "Dr. Karni Singh Shooting Range",
+     "key": "drkarnisinghshootingrange",
+     "lat": 28.4989,
+     "lon": 77.2648
+    },
+    {
+     "name": "Patparganj",
+     "key": "patparganj",
+     "lat": 28.6237,
+     "lon": 77.2873
+    },
+    {
+     "name": "Jahangirpuri",
+     "key": "jahangirpuri",
+     "lat": 28.7328,
+     "lon": 77.1706
+    },
+    {
+     "name": "JLN Stadium",
+     "key": "jawaharlalnehrustadium",
+     "lat": 28.5803,
+     "lon": 77.2339
+    },
+    {
+     "name": "R K Puram",
+     "key": "rkpuram",
+     "lat": 28.5632,
+     "lon": 77.1869
+    },
+    {
+     "name": "Pusa DPCC",
+     "key": "pusa",
+     "lat": 28.6397,
+     "lon": 77.159
+    },
+    {
+     "name": "Punjabi Bagh",
+     "key": "punjabibagh",
+     "lat": 28.674,
+     "lon": 77.131
+    },
+    {
+     "name": "Okhla Phase 2",
+     "key": "okhlaphase2",
+     "lat": 28.5308,
+     "lon": 77.271
+    },
+    {
+     "name": "ITO",
+     "key": "ito",
+     "lat": 28.6316,
+     "lon": 77.2409
+    },
+    {
+     "name": "Narela",
+     "key": "narela",
+     "lat": 28.8227,
+     "lon": 77.1017
+    },
+    {
+     "name": "Najafgarh",
+     "key": "najafgarh",
+     "lat": 28.57,
+     "lon": 76.9338
+    },
+    {
+     "name": "Mundka",
+     "key": "mundka",
+     "lat": 28.6819,
+     "lon": 77.0766
+    },
+    {
+     "name": "IHBAS Dilshad Garden",
+     "key": "ihbas",
+     "lat": 28.6811,
+     "lon": 77.3025
+    },
+    {
+     "name": "Mandir Marg",
+     "key": "mandirmarg",
+     "lat": 28.6364,
+     "lon": 77.201
+    },
+    {
+     "name": "Major Dhyan Chand Stadium",
+     "key": "majordhyanchandnationalstadium",
+     "lat": 28.6118,
+     "lon": 77.2373
+    },
+    {
+     "name": "North Campus DU",
+     "key": "northcampusimd",
+     "lat": 28.6573,
+     "lon": 77.1585
+    },
+    {
+     "name": "NSIT Dwarka",
+     "key": "nsitdwarka",
+     "lat": 28.609,
+     "lon": 77.0325
+    },
+    {
+     "name": "Nehru Nagar",
+     "key": "nehrunagar",
+     "lat": 28.5679,
+     "lon": 77.2506
+    },
+    {
+     "name": "Lodhi Road IMD",
+     "key": "lodhiroadimd",
+     "lat": 28.5918,
+     "lon": 77.2273
+    },
+    {
+     "name": "Lodhi Road IITM",
+     "key": "lodhiroadiitm",
+     "lat": 28.5836,
+     "lon": 77.2196
+    }
+   ]
+  },
+  "patiala": {
+   "name": "Patiala",
+   "center": [
+    30.34,
+    76.39
+   ],
+   "zoom": 12,
+   "bbox": [
+    30.28,
+    76.32,
+    30.4,
+    76.46
+   ],
+   "weather_point": [
+    30.34,
+    76.39
+   ],
+   "cell_step": 0.015,
+   "mask_km": 99,
+   "has_ground_stations": false,
+   "data_source": "Open-Meteo CAMS PM2.5 (satellite-assimilated model, not ground sensors); weather Open-Meteo",
+   "stations": [
+    {
+     "name": "Patiala (city estimate)",
+     "key": "patialacity",
+     "lat": 30.3398,
+     "lon": 76.3869
+    }
+   ]
+  }
+ }
+}
