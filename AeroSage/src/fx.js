@@ -49,7 +49,7 @@ export function createFx(c) {
       const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: u8(key) });
       const r = await pushPost(sub); try { localStorage.setItem(PK, sub.endpoint) } catch { }
       say(`Alerts are on for the area near ${r.station} (${r.level} or worse). We check the saved forecast about every 10 minutes and send one notification per event.`); refreshPush();
-    } catch (e) { say('Could not turn alerts on: ' + (e.message || e)); }
+    } catch (e) { say('Could not turn alerts on: ' + (e.message || e) + (navigator.brave ? ' Brave blocks push by default: open brave://settings/privacy, turn on "Use Google services for push messaging", restart Brave, and try again.' : '')); }
   }
   async function pushSync() { // the person changed the alert level while alerts are on
     if (!pushOn()) return;
@@ -59,7 +59,7 @@ export function createFx(c) {
     try { const reg = await navigator.serviceWorker.getRegistration('/sw.js'), sub = await reg?.pushManager.getSubscription(); if (sub) { await fetch('/api/push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) }); await sub.unsubscribe(); } try { localStorage.removeItem(PK) } catch { } say('Alerts are off for this device.'); refreshPush(); } catch (e) { say('Could not turn alerts off: ' + (e.message || e)); }
   }
   async function pushTest() {
-    try { const ep = localStorage.getItem(PK); if (!ep) return say('Turn alerts on first.'); const r = await fetch('/api/push/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: ep }) }); const j = await r.json(); say(j.ok ? 'Test sent. It should appear in a moment.' : 'The test could not be delivered (the browser or network refused it).'); } catch (e) { say('Test failed: ' + (e.message || e)); }
+    try { const ep = localStorage.getItem(PK); if (!ep) return say('Turn alerts on first.'); const r = await fetch('/api/push/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: ep }) }); const j = await r.json(); say(j.ok ? 'Test sent. It should appear in a moment. If nothing shows, check your Mac notification settings (System Settings > Notifications) and that Focus mode is off.' : 'The test could not be delivered: ' + (j.detail || 'the push service refused it') + (j.status === 404 || j.status === 410 ? ' This subscription has expired, so press Turn off and then Notify me again.' : '')); } catch (e) { say('Test failed: ' + (e.message || e)); }
   }
   function pushBlock() {
     const on = pushOn();
@@ -315,6 +315,32 @@ export function createFx(c) {
   }
 
   // ------------------------------------------------------------------ about
+
+  function hardwarePage() {
+    const H = '/assets/hardware/';
+    const parts = [
+      ['PM sensor (PMS5003)', 'Counts airborne particles and reports PM1.0, PM2.5 and PM10. PM2.5 is the number AeroSage forecasts.'],
+      ['Weather sensor (BME280)', 'Temperature and humidity, kept under a louvered shield on top so sun and rain do not skew it.'],
+      ['Gas sensors (optional)', 'CO, NO₂ and SO₂ modules can be added. The block diagram also lists O₃.'],
+      ['ESP32 controller', 'Reads every sensor and sends the readings over Wi-Fi to the AirWard server.'],
+      ['Battery and solar panel', 'A small solar panel recharges the battery, so the node needs no mains wiring.'],
+      ['Sealed enclosure', 'A pole-mounted case with vent slots and a green status LED on the front.']];
+    const steps = [
+      ['01', 'Air comes in', 'Outside air enters at the top, through the louvered inlet above the PM sensor.'],
+      ['02', 'Sensors measure', 'The PM sensor reports PM1.0, PM2.5 and PM10. The weather sensor adds temperature and humidity.'],
+      ['03', 'ESP32 collects', 'The controller gathers the readings and prepares them to send.'],
+      ['04', 'Wi-Fi to server', 'Readings travel over Wi-Fi to the AirWard server.'],
+      ['05', 'Feeds the forecast', 'Real PM2.5 from the street can correct and sharpen the AeroSage forecast for that neighbourhood.'],
+      ['06', 'Runs on its own', 'The solar panel keeps the battery topped up between readings.']];
+    return `<main class="as-page fx-about fx-hw"><div class="as-page-title"><small>THE HARDWARE</small><h1>The AirWard node: air measured where people live</h1><p>AeroSage forecasts from monitors and weather. A low-cost, solar-powered node would add a live reading from the street itself.</p></div>
+    <section class="as-card fx-sec fx-hw-hero"><div class="fx-hw-video"><video src="${H}node-demo.mp4" poster="${H}node-poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="The AirWard node opening to show its electronics"></video><span>The node opens to show the sensors, controller and battery inside.</span></div>
+    <div class="fx-hw-side"><h2>Why build a node</h2><p>The model has no live pollutant input today. Between CPCB monitors, it estimates. A node placed in a lane, school or market measures the air there and reports it.</p><div class="fx-hw-facts"><div><b>3</b><span>particle sizes: PM1.0, PM2.5, PM10</span></div><div><b>Solar</b><span>powered, no mains wiring</span></div><div><b>Wi-Fi</b><span>readings sent to the server</span></div></div></div></section>
+    <section class="as-card fx-sec"><h2>What is inside</h2><div class="fx-hw-figs"><figure><img src="${H}node-outdoor.jpg" alt="The AirWard node mounted on a pole outdoors" loading="lazy"><figcaption>Pole-mounted outdoors, with solar panel and louvered shield.</figcaption></figure><figure><img src="${H}node-inside.jpg" alt="Cut-away view of the AirWard node with each module labelled" loading="lazy"><figcaption>Cut-away view with each module labelled.</figcaption></figure></div>
+    <div class="fx-steps">${parts.map(([t, p]) => `<div><b>${t}</b><p>${p}</p></div>`).join('')}</div></section>
+    <section class="as-card fx-sec"><h2>How it works</h2><figure class="fx-hw-diagram"><img src="${H}node-diagram.jpg" alt="Block diagram of the AirWard node: air inlet, PM sensor, ESP32, gas and weather sensors, battery and solar panel, data to server" loading="lazy"><figcaption>Block diagram. Solid arrows are airflow and power, the dashed arrow is data.</figcaption></figure><div class="fx-steps">${steps.map(([k, t, p]) => `<div><small>${k}</small><b>${t}</b><p>${p}</p></div>`).join('')}</div></section>
+    <section class="as-card as-limits"><h2>Honest limits</h2><ul class="fx-list"><li>This page shows the node design. It is a concept in our plan, not yet a deployed network, and no readings from it appear anywhere on this site.</li><li>The forecasts you see here come from past monitor data and weather. They do not use the node.</li><li>Still to confirm: which gas sensors are fitted, battery and solar sizing, calibration against a reference monitor, and enclosure rating for rain and dust.</li></ul></section></main>`;
+  }
+
   function aboutPage() {
     const d = S.diwali, us = d?.backtest?.metrics?.['AirWard model'], wk = d?.backtest?.metrics?.["Last week's reading"];
     const steps = [
@@ -333,5 +359,5 @@ export function createFx(c) {
     <section class="as-card as-limits"><h2>Data and honest limits</h2><ul class="fx-list"><li>Sources: CPCB/DPCC via OpenCity, Open-Meteo and CAMS. Forecasts are model estimates, not live sensor readings.</li><li>The test used recorded weather, not a day-ahead weather forecast, so real use will be somewhat less accurate.</li><li>Farm-fire and traffic influence are a seasonal curve and a time-of-day proxy, not live fire counts or traffic data.</li><li>Between monitors the map is an estimate. Station positions are approximate (±1–2 km).</li><li>The Diwali peak can still be forecast a little low.</li><li>Air-quality information is not medical advice.</li></ul><p>Team NexByte · Lovely Professional University · Paryavaran Welfare Society</p></section></main>`;
   }
 
-  return { pushEnable, pushOff, pushTest, pushSync, alertBody, setAlertLvl, areaPanel, healthText, nowIdx, actPage, bindAct, loadAct, loadSim, paintAct, proofPage, bindProof, loadReplay, aboutPage };
+  return { pushEnable, pushOff, pushTest, pushSync, alertBody, setAlertLvl, areaPanel, healthText, nowIdx, actPage, bindAct, loadAct, loadSim, paintAct, proofPage, bindProof, loadReplay, hardwarePage, aboutPage };
 }

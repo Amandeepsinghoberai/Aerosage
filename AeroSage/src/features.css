@@ -115,3 +115,16 @@ body.land{background:#060A14;color:#EEF2F6}
 @media(max-width:760px){.full-map-page .as-map-legend{bottom:116px!important}}
 @media(max-width:620px){.full-map-page .as-map-legend{bottom:124px!important}}
 @media(max-width:1150px){.full-map-page .as-time-weather{display:none!important}}
+
+/* ---------- hardware page ---------- */
+.fx-hw-hero{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px;align-items:center}
+.fx-hw-video{margin:0}.fx-hw-video video{width:100%;display:block;border-radius:10px;border:1px solid #403a32;background:#15130f;aspect-ratio:848/478}
+.fx-hw-video span{display:block;margin-top:8px;font-size:12px;color:#b8afa1}
+.fx-hw-side h2{margin-top:0}
+.fx-hw-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.fx-hw-facts>div{background:#211f1b;border:1px solid #403a32;border-radius:10px;padding:12px}.fx-hw-facts b{display:block;font-size:20px;color:#efd7ad;margin-bottom:4px}.fx-hw-facts span{font-size:12px;color:#b8afa1;line-height:1.45}
+.fx-hw-figs{display:grid;grid-template-columns:minmax(0,.55fr) minmax(0,1.45fr);gap:16px;align-items:start;margin:6px 0 16px}
+.fx-hw figure{margin:0}.fx-hw figure img{width:100%;display:block;border-radius:10px;border:1px solid #403a32}
+.fx-hw figcaption{margin-top:8px;font-size:12px;color:#b8afa1;line-height:1.5}
+.fx-hw-diagram{margin:6px 0 16px!important}.fx-hw-diagram img{background:#fff;max-width:760px;margin:0 auto}.fx-hw-diagram figcaption{text-align:center}
+@media(max-width:860px){.fx-hw-hero,.fx-hw-figs{grid-template-columns:1fr}.fx-hw-figs figure:first-child{max-width:260px}}

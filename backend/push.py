@@ -110,16 +110,22 @@ def message(sub, ep):
 
 
 def send(sub, payload):
+    """Returns (ok, http_status, detail). detail is a short text explaining a failure (also printed in the server window)."""
     from pywebpush import webpush, WebPushException
     try:
         webpush(subscription_info=sub["subscription"], data=json.dumps(payload), vapid_private_key=str(PRIVATE_PEM),
-                vapid_claims={"sub": "mailto:aerosage@example.com"}, ttl=3600)
-        return True, None
+                vapid_claims={"sub": os.environ.get("AIRWARD_VAPID_SUB", "mailto:aerosage-alerts@example.com")}, ttl=3600)
+        return True, None, None
     except WebPushException as e:
-        code = getattr(getattr(e, "response", None), "status_code", None)
-        return False, code
-    except Exception:
-        return False, None
+        resp = getattr(e, "response", None)
+        code = getattr(resp, "status_code", None)
+        body = (getattr(resp, "text", "") or "")[:200]
+        detail = f"push service answered {code}: {body}" if code else f"could not reach the push service: {str(e)[:200]}"
+        print("[push] send failed -", detail, flush=True)
+        return False, code, detail
+    except Exception as e:
+        print("[push] send error -", repr(e)[:300], flush=True)
+        return False, None, repr(e)[:200]
 
 
 def check_all(CITIES):
@@ -135,7 +141,7 @@ def check_all(CITIES):
             except Exception:
                 ep = None
             if ep and (ep["active"] or ep["hours_until"] <= LOOKAHEAD_H) and s.get("last_key") != ep["key"]:
-                ok, code = send(s, message(s, ep))
+                ok, code, _ = send(s, message(s, ep))
                 if ok:
                     s["last_key"] = ep["key"]; report["sent"] += 1
                 elif code in (404, 410):
@@ -195,8 +201,8 @@ def make_router(CITIES, nearest_station):
         s = next((x for x in _load() if x["subscription"].get("endpoint") == b.endpoint), None)
         if not s:
             raise HTTPException(404, "subscribe first")
-        ok, code = send(s, {"title": "AeroSage test alert", "body": f"Alerts are on for {s['station']} ({LEVELS[s['level']]} or worse). This is a test.", "url": "/#map", "tag": "test"})
-        return {"ok": ok, "status": code}
+        ok, code, detail = send(s, {"title": "AeroSage test alert", "body": f"Alerts are on for {s['station']} ({LEVELS[s['level']]} or worse). This is a test.", "url": "/#map", "tag": "test"})
+        return {"ok": ok, "status": code, "detail": detail}
 
     @r.post("/check")
     def check():

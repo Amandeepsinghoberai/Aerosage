@@ -6,7 +6,7 @@ export function landingHTML() {
   <div class="ld-stage" aria-hidden="true"><div class="ld-sky" id="lSky"></div><div class="ld-smoke" id="lSmoke"></div><div class="ld-veil"></div>
     <div class="ld-earth"><img src="/landing/earth.webp" alt=""><span class="ld-delhi"><i></i><b>Delhi</b></span></div></div>
   <header class="ltop"><a class="lbrand" href="#home">${LOGO}<span>AeroSage</span></a>
-    <nav aria-label="Main"><a href="#map">Map</a><a href="#act">Act</a><a href="#proof">Proof</a><a href="#about">About</a></nav>
+    <nav aria-label="Main"><a href="#map">Map</a><a href="#act">Act</a><a href="#proof">Proof</a><a href="#hardware">Hardware</a><a href="#about">About</a></nav>
     <a class="lbtn" href="#map">Open the map</a></header>
   <main class="ld-story">
     <section class="ld-chapter ld-hero ld-in"><h1>Diwali air, forecast street by street.</h1>
